@@ -37,3 +37,11 @@ test('SARIF has CVE rules, relative artifact paths and runtime scope', async (t)
 test('terminal output strips control sequences and bidirectional overrides', () => {
   assert.equal(terminalSafe('evil\u001b[31m\n\u202e'), 'evil?[31m??');
 });
+
+test('inconclusive SARIF findings use the Nodfix review rule', async (t) => {
+  const root = await project(t);
+  const report = await scan(root, db, undefined, '28.0.0', fixtureNow);
+  const sarif = toSarif(report);
+  assert.equal(sarif.runs[0].results[0].ruleId, 'NODFIX-REVIEW');
+  assert.equal(sarif.runs[0].invocations[0].executionSuccessful, false);
+});

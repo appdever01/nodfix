@@ -29,7 +29,7 @@ export function toSarif(report: Report): unknown {
   const findings: Finding[] = [report.runtime, ...report.declarations];
   const issues = [...new Map(findings.flatMap((f) => f.assessment.issues).map((i) => [i.id, i])).values()];
   const results = findings.flatMap((finding) => {
-    const ids = finding.assessment.issues.length ? finding.assessment.issues.map((i) => i.id) : finding.assessment.status !== 'patched' ? ['NODE-SHIELD-REVIEW'] : [];
+    const ids = finding.assessment.issues.length ? finding.assessment.issues.map((i) => i.id) : finding.assessment.status !== 'patched' ? ['NODFIX-REVIEW'] : [];
     return ids.map((id) => ({
       ruleId: id,
       level: finding.assessment.status === 'unknown' ? 'warning' : 'error',
@@ -42,7 +42,7 @@ export function toSarif(report: Report): unknown {
     runs: [{ tool: { driver: { name: 'nodfix', informationUri: 'https://github.com/appdever01/nodfix',
       rules: [...issues.map((i) => ({ id: i.id, shortDescription: { text: i.summary }, helpUri: report.advisory.source,
         properties: { 'security-severity': ({ low: '3.0', medium: '6.0', high: '8.0', critical: '9.0' } as const)[i.severity] } })),
-        { id: 'NODE-SHIELD-REVIEW', shortDescription: { text: 'Runtime requires manual review' } }] } },
+        { id: 'NODFIX-REVIEW', shortDescription: { text: 'Runtime requires manual review' } }] } },
       invocations: [{ executionSuccessful: report.exitCode !== 2, toolExecutionNotifications: [...report.warnings, ...report.diagnostics].map((message) => ({ level: 'warning', message: { text: message } })) }],
       properties: { scope: report.scope, advisory: report.advisory, exitCode: report.exitCode }, results }],
   };
