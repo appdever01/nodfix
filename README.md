@@ -4,11 +4,22 @@ An offline Node.js runtime security scanner with guided, consent-based remediati
 
 Nodfix checks the executing Node.js binary and project version declarations against reviewed official advisories. It recommends security releases within the same major, prints runtime-manager commands, and can update project pins after approval. It never patches the Node.js binary or runs an installer.
 
-**Status:** working 0.1.0 MVP, not yet published to npm or independently audited. `nodfix` was unregistered on npm when checked on October 21, 2026; the name is not reserved until publication. This project is independent of the Node.js project.
+**Status:** initial 0.1.0 MVP. Not independently audited. This project is independent of the Node.js project.
 
-## Run from source
+## Quickstart
 
 Requires Node.js 22.13.0 or later to run the CLI. Use a supported, patched release for development. Older runtime declarations are still assessed; the tool does not execute alternate installed binaries.
+
+```sh
+npx nodfix scan
+npx nodfix fix --dry-run
+npx nodfix fix --interactive
+npx nodfix verify --json
+```
+
+The npm package's repository must point to `appdever01/nodfix`. For a permanent command, use `npm install --global nodfix`.
+
+## Run from source
 
 ```sh
 git clone https://github.com/appdever01/nodfix.git
@@ -20,16 +31,7 @@ node dist/cli.js fix --path /path/to/project --dry-run
 node dist/cli.js verify --path /path/to/project --json
 ```
 
-After building, `npm install --global .` installs the `nodfix` command locally. After an npm release, the intended commands are:
-
-```sh
-npx nodfix scan
-npx nodfix fix --dry-run
-npx nodfix fix --interactive
-npx nodfix verify --json
-```
-
-Do not run `npx nodfix` before confirming the npm package belongs to this repository. A registry name check does not reserve ownership.
+After building, `npm install --global .` installs the source checkout's `nodfix` command locally.
 
 ## October 2026 advisory
 
@@ -156,12 +158,14 @@ JSON reports contain the local runtime, each declaration's assessment, source re
 
 ## Release checklist
 
+Version 0.1.0 has maintainer approval to release using local validation while hosted CI is unavailable. The cross-platform matrix has not executed for this release. This exception does not represent a passing CI result.
+
 - Review the advisory, linked releases, source fingerprints, lifecycle dates and conservative range policy against official sources. Increment the advisory revision for data changes.
 - Run `npm ci --ignore-scripts`, `npm run check`, `npm run verify:sources` and the full cross-platform CI matrix. Resolve every required failure.
 - Create and install an npm tarball in a clean temporary project. Smoke-test both command output and scan/fix/verify behavior.
 - Inspect `npm pack --dry-run` and staged paths. Exclude local guidance, internal notes, caches, credentials and development artifacts.
 - Confirm npm name ownership and maintainer access, review the version, license, repository links and security reporting configuration.
 - Configure trusted publishing/provenance or an approved maintainer publishing method. Publish only after explicit release authorization. No automatic publishing workflow is enabled.
-- Verify the registry artifact and integrity, then replace the unpublished notice and source-only examples as appropriate. Publishing the package is a separate action from pushing this repository.
+- Verify the registry artifact, integrity and a clean `npx nodfix` installation. Publishing the package is a separate action from pushing this repository.
 
 See [SECURITY.md](SECURITY.md) for reporting vulnerabilities and detailed trust boundaries. MIT licensed.
