@@ -1,0 +1,32 @@
+name: Nodfix runtime scan
+description: Scan the runner Node.js runtime and project version declarations against reviewed Node.js advisories
+author: Naheem Adisa
+inputs:
+  path:
+    description: Project root to scan
+    required: false
+    default: .
+  format:
+    description: Report format (text, json, sarif)
+    required: false
+    default: text
+runs:
+  using: composite
+  steps:
+    - name: Build Nodfix
+      shell: bash
+      env:
+        NODFIX_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        npm ci --ignore-scripts --prefix "$NODFIX_ACTION_PATH"
+        npm run build --prefix "$NODFIX_ACTION_PATH"
+    - name: Scan runtime and project
+      shell: bash
+      env:
+        NODFIX_ACTION_PATH: ${{ github.action_path }}
+        NODFIX_PROJECT_PATH: ${{ inputs.path }}
+        NODFIX_REPORT_FORMAT: ${{ inputs.format }}
+      run: node "$NODFIX_ACTION_PATH/dist/cli.js" scan --ci --offline --path "$NODFIX_PROJECT_PATH" --format "$NODFIX_REPORT_FORMAT"
+branding:
+  icon: shield
+  color: green

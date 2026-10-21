@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "reviewedAt": "2026-10-21T18:31:04.434Z",
+  "expiresAt": "2026-11-20T18:31:04.435Z",
+  "scheduleSource": "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json",
+  "lifecycle": [
+    {
+      "major": 4,
+      "end": "2018-04-30"
+    },
+    {
+      "major": 5,
+      "end": "2016-06-30"
+    },
+    {
+      "major": 6,
+      "end": "2019-04-30"
+    },
+    {
+      "major": 7,
+      "end": "2017-06-30"
+    },
+    {
+      "major": 8,
+      "end": "2019-12-31"
+    },
+    {
+      "major": 9,
+      "end": "2018-06-30"
+    },
+    {
+      "major": 10,
+      "end": "2021-04-30"
+    },
+    {
+      "major": 11,
+      "end": "2019-06-01"
+    },
+    {
+      "major": 12,
+      "end": "2022-04-30"
+    },
+    {
+      "major": 13,
+      "end": "2020-06-01"
+    },
+    {
+      "major": 14,
+      "end": "2023-04-30"
+    },
+    {
+      "major": 15,
+      "end": "2021-06-01"
+    },
+    {
+      "major": 16,
+      "end": "2023-09-11"
+    },
+    {
+      "major": 17,
+      "end": "2022-06-01"
+    },
+    {
+      "major": 18,
+      "end": "2025-04-30"
+    },
+    {
+      "major": 19,
+      "end": "2023-06-01"
+    },
+    {
+      "major": 20,
+      "end": "2026-04-30"
+    },
+    {
+      "major": 21,
+      "end": "2024-06-01"
+    },
+    {
+      "major": 22,
+      "end": "2027-04-30"
+    },
+    {
+      "major": 23,
+      "end": "2025-06-01"
+    },
+    {
+      "major": 24,
+      "end": "2028-04-30"
+    },
+    {
+      "major": 25,
+      "end": "2026-06-01"
+    },
+    {
+      "major": 26,
+      "end": "2029-04-30"
+    },
+    {
+      "major": 27,
+      "end": "2030-04-30"
+    }
+  ],
+  "advisories": [
+    {
+      "id": "october-2026",
+      "published": "2026-10-21",
+      "source": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
+      "rangePolicy": "conservative-major-before-fixed",
+      "lines": [
+        {
+          "major": 22,
+          "fixed": "22.23.4",
+          "source": "https://nodejs.org/en/blog/release/v22.23.4/"
+        },
+        {
+          "major": 24,
+          "fixed": "24.22.1",
+          "source": "https://nodejs.org/en/blog/release/v24.22.1/"
+        },
+        {
+          "major": 26,
+          "fixed": "26.12.1",
+          "source": "https://nodejs.org/en/blog/release/v26.12.1/"
+        }
+      ],
+      "issues": [
+        {
+          "id": "CVE-2026-105482",
+          "summary": "DNS resolver NUL-byte truncation",
+          "severity": "high",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-105483",
+          "summary": "TLS hostname validation bypass using fullwidth IP digits",
+          "severity": "high",
+          "affectedMajors": [
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-106069",
+          "summary": "TLS hostname validation bypass using ambiguous IP addresses",
+          "severity": "high",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-111497",
+          "summary": "Brotli decoder memory corruption and possible code execution",
+          "severity": "high",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-105481",
+          "summary": "HTTP keep-alive response confusion",
+          "severity": "medium",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-106072",
+          "summary": "TLS certificate validation accepts noncanonical IPv4 hostnames",
+          "severity": "medium",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-106074",
+          "summary": "Repeated cryptographic randomness after snapshot restoration",
+          "severity": "medium",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-106070",
+          "summary": "ZIP reader exposes unvalidated prefix bytes",
+          "severity": "low",
+          "affectedMajors": [
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-106071",
+          "summary": "Permission filesystem wildcard grants excessive access",
+          "severity": "low",
+          "affectedMajors": [
+            26
+          ]
+        },
+        {
+          "id": "CVE-2026-106073",
+          "summary": "Filesystem permission bypass through realpathSync",
+          "severity": "low",
+          "affectedMajors": [
+            22,
+            24,
+            26
+          ]
+        }
+      ]
+    }
+  ]
+}

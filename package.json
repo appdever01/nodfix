@@ -1,0 +1,58 @@
+{
+  "name": "nodfix",
+  "version": "0.1.0",
+  "description": "Offline-first Node.js runtime security scanner and guided remediation CLI",
+  "scripts": {
+    "test": "node --test --test-concurrency=2 test/*.test.mjs",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run check",
+    "pretest": "npm run build",
+    "verify:sources": "node scripts/verify-sources.mjs",
+    "smoke:pack": "npm run build && node scripts/packed-smoke.mjs"
+  },
+  "keywords": [],
+  "author": "Naheem Adisa",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "nodfix": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/appdever01/nodfix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/appdever01/nodfix/issues"
+  },
+  "homepage": "https://github.com/appdever01/nodfix#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "data",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "commander": "^15.0.0",
+    "semver": "^7.8.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "@types/semver": "^7.8.0",
+    "eslint": "^10.13.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0"
+  }
+}

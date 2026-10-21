@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+*.tgz
+.local/
+.openai/
+AGENTS.md
+AGENT.md
+CLAUDE.md
+CODEX.md
+setup.sh
+**/[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
+**/[Aa][Gg][Ee][Nn][Tt].[Mm][Dd]
+**/[Cc][Ll][Aa][Uu][Dd][Ee].[Mm][Dd]
+**/[Cc][Oo][Dd][Ee][Xx].[Mm][Dd]
+**/.openai/
