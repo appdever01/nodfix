@@ -37,9 +37,14 @@ export async function planFix(root: string, report: Report): Promise<Plan> {
       const lines = edit.after.split(/\r?\n/);
       const line = lines[declaration.line - 1]!;
       const image = declaration.image!;
+      const column = declaration.imageColumn;
+      if (column === null || line.slice(column, column + image.length) !== image) {
+        plan.manual.push(`${declaration.file}:${declaration.line}: split or changed image reference requires manual review.`);
+        continue;
+      }
       const updated = image.replace(/:([^:]+)$/, (_full, tag: string) => `:${tag.replace(/^v?\d+(?:\.\d+){0,2}/, target)}`);
       if (updated === image) { plan.manual.push(`${declaration.file}:${declaration.line}: update image manually.`); continue; }
-      lines[declaration.line - 1] = line.replace(image, updated);
+      lines[declaration.line - 1] = line.slice(0, column) + updated + line.slice(column + image.length);
       edit.after = lines.join(newline);
     } else {
       edit.after = edit.after.replace(declaration.value, declaration.value.startsWith('v') ? `v${target}` : target);

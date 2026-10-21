@@ -1,6 +1,6 @@
 {
   "name": "nodfix",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Offline-first Node.js runtime security scanner and guided remediation CLI",
   "scripts": {
     "test": "node --test --test-concurrency=2 test/*.test.mjs",

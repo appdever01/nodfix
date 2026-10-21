@@ -38,8 +38,9 @@ export async function scan(root: string, db: Database, id?: string, runtime = pr
   const diagnostics = [...discovery.diagnostics];
   for (const finding of declarations) {
     const declaration = finding.declaration!;
-    const exact = semver.valid(declaration.value);
-    const range = semver.validRange(declaration.value);
+    const bounded = declaration.value.length <= 512;
+    const exact = bounded ? semver.valid(declaration.value) : null;
+    const range = bounded && declaration.value.trim() ? semver.validRange(declaration.value) : null;
     if (range && semver.valid(runtime) && !semver.satisfies(runtime, range)) {
       diagnostics.push(`Runtime does not satisfy ${declaration.file}:${declaration.line} (${declaration.value}).`);
     }

@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from 'commander';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fetchDatabase, cacheDatabase } from './database.js';
 import { commonOptions, runScan, emit, type Options } from './options.js';
 import { fixCommand } from './fix-command.js';
 import { terminalSafe } from './report.js';
 
+const metadata = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
 const program = new Command();
-program.name('nodfix').description('Scan the executing Node.js runtime and project declarations against reviewed official advisories').version('0.1.0').exitOverride();
+program.name('nodfix').description('Scan the executing Node.js runtime and project declarations against reviewed official advisories').version(metadata.version).exitOverride();
 for (const command of ['scan', 'verify']) {
   commonOptions(program.command(command).description(command === 'scan' ? 'Scan local runtime and declarations' : 'Verify the local runtime against the selected advisory'))
     .action(async (options: Options) => { emit(await runScan(options, command), options); });

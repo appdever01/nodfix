@@ -1,13 +1,13 @@
-import { readFile, mkdir, rename, rm, open } from 'node:fs/promises';
+import { mkdir, rename, rm, open } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
+import { readLimitedText } from './io.js';
 import { databaseSchema, type Database } from './schema.js';
 
 export const MAX_BYTES = 2 * 1024 * 1024;
 export async function loadDatabase(path?: string): Promise<Database> {
-  const buffer = await readFile(path ?? new URL('../data/advisories.json', import.meta.url));
-  if (buffer.length > MAX_BYTES) throw new Error('Advisory database exceeds size limit');
-  return databaseSchema.parse(JSON.parse(buffer.toString('utf8')));
+  const text = await readLimitedText(path ?? new URL('../data/advisories.json', import.meta.url), MAX_BYTES);
+  return databaseSchema.parse(JSON.parse(text));
 }
 export async function fetchDatabase(url: string, expectedHash: string, fetcher: typeof fetch = fetch): Promise<Database> {
   const source = new URL(url);

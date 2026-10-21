@@ -1,67 +1,80 @@
 # Nodfix
 
-An offline Node.js runtime security scanner with guided, consent-based remediation.
+Check your Node.js version against official security advisories and see what needs updating.
 
-Nodfix checks the executing Node.js binary and project version declarations against reviewed official advisories. It recommends security releases within the same major, prints runtime-manager commands, and can update project pins after approval. It never patches the Node.js binary or runs an installer.
+Nodfix scans your running runtime and project version declarations, recommends a patched release within the same major, and updates supported pins after approval.
 
-**Status:** initial 0.1.0 MVP. Not independently audited. This project is independent of the Node.js project.
+[npm package](https://www.npmjs.com/package/nodfix) · [Report a security issue](https://github.com/appdever01/nodfix/security/advisories/new) · [MIT license](LICENSE)
 
 ## Quickstart
 
-Requires Node.js 22.13.0 or later to run the CLI. Use a supported, patched release for development. Older runtime declarations are still assessed; the tool does not execute alternate installed binaries.
+Requires Node.js 22.13.0 or later.
 
 ```sh
 npx nodfix scan
+```
+
+If the scan finds an affected version, preview the suggested changes:
+
+```sh
 npx nodfix fix --dry-run
+```
+
+Review the plan, then approve it in your terminal:
+
+```sh
 npx nodfix fix --interactive
-npx nodfix verify --json
 ```
 
-The npm package's repository must point to `appdever01/nodfix`. For a permanent command, use `npm install --global nodfix`.
-
-## Run from source
+Install the recommended Node.js release using your runtime manager, then check again:
 
 ```sh
-git clone https://github.com/appdever01/nodfix.git
-cd nodfix
-npm ci --ignore-scripts
-npm run build
-node dist/cli.js scan --path /path/to/project
-node dist/cli.js fix --path /path/to/project --dry-run
-node dist/cli.js verify --path /path/to/project --json
+npx nodfix verify
 ```
 
-After building, `npm install --global .` installs the source checkout's `nodfix` command locally.
+Nodfix prints upgrade commands for nvm, fnm, Volta, asdf and mise. You run those commands yourself. The CLI cannot patch the Node.js binary, restart your app or replace a running container.
 
-## October 2026 advisory
+You can also install it with `npm install --global nodfix` and use `nodfix` directly. The first `npx` installation needs network access; scans run offline after installation.
 
-The bundled database was researched on October 21, 2026 using the [official security advisory](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases), its three linked security release notes, and the [Node.js release schedule](https://github.com/nodejs/Release#release-schedule).
+## What gets checked
 
-| Release line | Security release | CVEs listed for that line |
-| --- | --- | --- |
-| 22.x | [22.23.4](https://nodejs.org/en/blog/release/v22.23.4/) | 7 |
-| 24.x | [24.22.1](https://nodejs.org/en/blog/release/v24.22.1/) | 8 |
-| 26.x | [26.12.1](https://nodejs.org/en/blog/release/v26.12.1/) | 10 |
+| Source | What Nodfix reads |
+| --- | --- |
+| Running Node.js process | The version of the binary executing Nodfix |
+| `.nvmrc` and `.node-version` | Project runtime declarations |
+| `package.json` | `engines.node` and `volta.node` |
+| Dockerfiles | Official Node image tags in `FROM` instructions, including continued lines |
 
-The main advisory lists four high, three medium and three low severity CVEs. Exact IDs, summaries, affected majors and source URLs are in [data/advisories.json](data/advisories.json). The main advisory's severity takes precedence where release notes group multiple CVEs under a single severity.
+The scan walks nested projects and workspaces. It reports unresolved aliases, prereleases and uncovered versions for manual review. Docker image digests are not inspected, and custom images or Node.js installations inside `RUN` commands are outside detection.
 
-Upstream identifies affected release lines without precise introduction versions. Nodfix conservatively flags earlier stable versions on those majors as vulnerable, with an explicit explanation. These checks are **not verified exact vulnerability intervals**. Ranges that permit earlier versions are reported as potentially vulnerable. Known end-of-life versions are reported separately without inventing CVE applicability. Custom vendor backports and prereleases require manual review.
+A passing result applies to the selected advisory and the files that were checked. Verify inside each deployment environment after upgrading. A changed version file does not establish which runtime is running in production.
 
-A passing result means the selected advisory's release threshold is met within the checked scope. It does not establish production security, dependency security or absence of later vulnerabilities.
+## Commands
 
-## Commands and reports
+| Command | Result |
+| --- | --- |
+| `scan` | Assess the local runtime and project declarations |
+| `fix` | Show a plan; update supported declarations after approval |
+| `verify` | Rescan the runtime and check declaration consistency |
+| `advisories update` | Download and verify a separately versioned advisory database |
+
+Use `--path` to scan another project:
 
 ```sh
-nodfix scan --path . --offline
-nodfix scan --json --ci
-nodfix scan --format sarif > nodfix.sarif
-nodfix scan --advisory october-2026
-nodfix verify --json > verification.json
-nodfix fix --dry-run
-nodfix fix --yes
+npx nodfix scan --path /path/to/project
 ```
 
-`scan`, `fix` and `verify` accept `--path`, `--database`, `--advisory`, `--json`, `--format`, `--ci` and `--offline`. `fix` supports text and JSON; SARIF is available for scan and verify. All scans are offline by default. `--ci` disables interactive approval.
+For scripts and CI, choose JSON or SARIF output:
+
+```sh
+npx nodfix scan --json --ci
+npx nodfix verify --json > verification.json
+npx nodfix scan --format sarif > nodfix.sarif
+```
+
+`scan`, `fix` and `verify` accept `--path`, `--database`, `--advisory`, `--json`, `--format`, `--ci` and `--offline`. SARIF is available for `scan` and `verify`; `fix` supports text and JSON. `--ci` prevents interactive approval. Run `npx nodfix --help` for the command list.
+
+### Exit codes
 
 | Exit | Meaning |
 | --- | --- |
@@ -69,103 +82,119 @@ nodfix fix --yes
 | 1 | Vulnerable or potentially vulnerable versions, or an end-of-life runtime, were found |
 | 2 | Inconclusive assessment, stale data, inconsistent declarations, incomplete discovery, invalid input or an operational failure |
 
-When findings and uncertainty coexist, exit 1 takes precedence. Always inspect diagnostics and the `incomplete` field as well as the exit code. `verify` uses the same checks and emits a machine-readable report with `--json`; a configuration edit alone cannot confirm runtime remediation.
+If findings and uncertainty coexist, exit 1 takes precedence. Read `diagnostics` and `incomplete` in the JSON report as well as the exit code. Incomplete scans are marked unsuccessful in SARIF.
 
-Nodfix recursively discovers `.nvmrc`, `.node-version`, `package.json` engines and Volta pins, `Dockerfile`, `Dockerfile.*` and `*.Dockerfile`, including nested workspace projects. It reads official Node image tags and multistage FROM instructions. Unresolved image variables and aliases remain inconclusive. Custom images and Node installations performed by RUN commands are outside detection. Digest contents are not inspected.
+## Applying fixes
 
-Traversal skips symlinks, its own backups, dependency folders and common generated directories: `node_modules`, `.git`, `.hg`, `.svn`, `.next`, `dist`, `build`, `coverage`, `vendor`, `.openai`, `.local`. It does not interpret `.gitignore`. Limits are 20,000 entries, 30 directory levels and 1 MiB per declaration file; exceeding them creates an incomplete result.
+`fix` previews changes by default. Use `--interactive` to review and approve the plan, or `--yes` to approve automatic configuration updates without a prompt. `--dry-run` prevents writes even when combined with `--yes`.
 
-### What fix can change
+Automatic fixes preserve major versions and Docker image suffixes. They cover single-major nvm/fnm declarations, Volta pins and exact engines pins. Broad ranges, aliases, digest pins, split image tokens and major migrations need manual review.
 
-`fix` previews changes by default. `--dry-run` always prevents writes, including with `--yes`. `--interactive` displays the plan and asks for approval; `--yes` explicitly approves automatic declaration edits without prompting.
+Changed files get a `.nodfix-backup`. Existing backups, concurrent edits, symlinks, hardlinks and incomplete discovery block writes. JSON files may be reformatted. Changes are atomic per file; if a later update fails, earlier changes remain and are listed on stderr. Review backups before retrying, then rebuild and redeploy where needed. See [SECURITY.md](SECURITY.md) for the file-write safeguards.
 
-Automatic updates cover single-major nvm/fnm declarations, exact Volta and engines pins, and numeric official Docker tags while retaining their image suffix. Broad engines ranges, unresolved aliases, digest pins and major migrations require a manual decision. Existing majors are preserved. JSON package files retain fields, indentation and newline style, but may be reformatted.
+## October 2026 advisory
 
-Every changed file gets an exclusive `.nodfix-backup` beside it. Existing backups, changed files, symlinks, hardlinks and incomplete discovery block writes. Inspect backups before removing them to permit future updates. Updates are atomic per file; an error can leave earlier approved files updated, with each written path reported on stderr.
+The bundled data comes from the [official October 21, 2026 advisory](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases), its linked release notes and the [Node.js release schedule](https://github.com/nodejs/Release#release-schedule).
 
-Manager detection covers nvm, fnm, Volta, asdf and mise. Suggestions are printed without execution. Fixes do not restart applications, rebuild images, modify a running container or deploy to production. Run the suggested upgrade in your own terminal, rebuild and redeploy where needed, then run `verify` inside the target environment.
+| Release line | Security release | CVEs listed for that line |
+| --- | --- | --- |
+| 22.x | [22.23.4](https://nodejs.org/en/blog/release/v22.23.4/) | 7 |
+| 24.x | [24.22.1](https://nodejs.org/en/blog/release/v24.22.1/) | 8 |
+| 26.x | [26.12.1](https://nodejs.org/en/blog/release/v26.12.1/) | 10 |
 
-## Advisory updates without a CLI release
+The advisory lists four high, three medium and three low severity CVEs. [data/advisories.json](data/advisories.json) records the IDs, affected majors and sources. Severity follows the main advisory.
 
-Advisory JSON is independently versioned using `schemaVersion` and monotonic `revision`. New reviewed data can be committed to `data/advisories.json` without changing the package version. The latest advisory defaults to the last database entry; use `--advisory` to select another. Assessments are scoped to that selected advisory, not cumulative across every historical record.
+Upstream does not give precise introduction versions. Nodfix checks earlier stable versions conservatively; these are not verified exact vulnerability intervals. Ranges that allow affected versions are potentially vulnerable. End-of-life releases are flagged separately without unconfirmed CVE assignments. Vendor backports need review.
 
-Obtain a commit ID and SHA-256 digest through a trusted channel, then:
+## Advisory updates
+
+Advisory data can be updated without publishing a new CLI version. Obtain a reviewed commit ID and SHA-256 digest through a trusted channel, then:
 
 ```sh
-nodfix advisories update \
+npx nodfix advisories update \
   --url "https://raw.githubusercontent.com/appdever01/nodfix/<40-character-commit>/data/advisories.json" \
   --sha256 "<trusted-64-character-digest>" \
   --output .nodfix-cache/advisories.json
-nodfix scan --database .nodfix-cache/advisories.json --offline
+npx nodfix scan --database .nodfix-cache/advisories.json --offline
 ```
 
-Downloads require a commit-pinned HTTPS URL in this repository, reject redirects, time out after 10 seconds and are limited to 2 MiB. The digest and strict schema are checked before caching. Older revisions, older review timestamps, expired updates and future-dated reviews are rejected. Failed updates retain the previous cache. Cached data is only used when explicitly selected through `--database`.
+Replace the placeholders with reviewed values. Updates require a commit-pinned HTTPS URL from this repository and a trusted digest, reject redirects and rollbacks, and validate the schema before writing. A failed update preserves the previous cache. Local `--database` files are trusted operator input; a SHA-256 digest is not a Node.js signature.
 
-Bundled reviews expire after 30 days; stale data cannot produce a passing scan. This freshness limit is a review policy, not proof that no newer advisory exists. The project has no automatic upstream vulnerability ingestion or advisory availability guarantee.
+Reviews expire after 30 days. Stale data cannot produce a passing result, and a fresh review does not guarantee that no newer advisory exists. Data has a versioned schema and revision. The last entry is selected by default; `--advisory october-2026` selects that advisory explicitly. Checks are scoped to the selection. Upstream ingestion is manual.
 
-## CI and dependency automation
+<details>
+<summary>Scan limits and skipped paths</summary>
 
-GitHub Actions can use the composite action from source, even before npm publication. Pin it to a reviewed full commit SHA:
+Traversal stops at 20,000 entries and 30 directory levels. Declaration files are limited to 1 MiB, version values and image references to 512 characters, and advisory databases to 2 MiB. Advisory downloads time out after 10 seconds. Oversized or unreadable declarations make the scan incomplete.
 
-```yaml
-steps:
-  - uses: actions/checkout@v6
-  - uses: actions/setup-node@v6
-    with:
-      node-version: '24.22.1'
-  - uses: appdever01/nodfix@<reviewed-full-commit-sha>
-    with:
-      path: .
-      format: json
+Reads and traversal are bounded. Skipped directories: `node_modules`, `.git`, `.hg`, `.svn`, `.next`, `dist`, `build`, `coverage`, `vendor`, `.openai`, `.local`. Symlinks and Nodfix backups are skipped. `.gitignore` is not interpreted. Scan a stable checkout you control.
+
+</details>
+
+## CI use
+
+Pin the CLI version in your pipeline:
+
+```sh
+npx --yes nodfix@0.1.1 scan --ci --json > nodfix.json
 ```
 
-The action installs its locked build dependencies with lifecycle scripts disabled, compiles the CLI and scans the runner runtime. It does not verify a separate production environment. For SARIF upload workflows, retain the scanner's exit code, upload the report even after findings, then fail the job with the original code. SARIF reports include warnings, scope, execution status and per-CVE results.
+Keep the scanner's exit code when uploading reports. A vulnerable scan exits 1, so configure report artifacts to upload after failures too.
 
-GitLab CI before npm publication can build a reviewed source checkout:
+A [GitHub composite action](action.yml) is also available; pin it to a reviewed full SHA. The configured Windows, Linux and macOS matrix has not executed. External consumer pipelines remain unverified.
+
+<details>
+<summary>GitLab CI example</summary>
 
 ```yaml
 runtime-security:
   image: node:24.22.1-bookworm
   script:
-    - git clone https://github.com/appdever01/nodfix.git /tmp/nodfix
-    - git -C /tmp/nodfix checkout "$NODFIX_COMMIT"
-    - npm ci --ignore-scripts --prefix /tmp/nodfix
-    - npm run build --prefix /tmp/nodfix
-    - node /tmp/nodfix/dist/cli.js scan --path "$CI_PROJECT_DIR" --json --ci > nodfix.json
+    - npx --yes nodfix@0.1.1 scan --ci --json > nodfix.json
   artifacts:
     when: always
     paths: [nodfix.json]
 ```
 
-Set `NODFIX_COMMIT` to a reviewed full SHA. These examples are provided for integration; external consumer pipelines have not been executed here. The repository's CI matrix tests Windows, macOS and Linux against the three security releases.
+</details>
 
-Dependabot is configured for npm dependencies and Actions. Dependabot and Renovate can maintain their supported runtime and Docker declarations alongside Nodfix. Nodfix does not register as a vulnerability feed for those services or update their databases. Review digest changes and rebuild images through the normal release process.
+Dependabot checks npm dependencies and Actions. Renovate can maintain its supported runtime declarations alongside Nodfix. This package does not provide a vulnerability feed for either service.
 
-## Development and architecture
+## Development
 
 ```sh
+git clone https://github.com/appdever01/nodfix.git
+cd nodfix
 npm ci --ignore-scripts
 npm run check
-npm pack --dry-run
+npm run smoke:pack
+npm audit
+npm audit signatures
 npm run verify:sources
 ```
 
-`verify:sources` makes network requests to official Node.js sources and compares current source fingerprints and advisory facts with the research fixture. A changed upstream page requires human review. The regular test suite uses offline fixtures, mocked fetch responses and temporary projects; it never changes the developer's Node.js installation. Test-file concurrency is capped at two.
+To run the checkout after building, use `node dist/cli.js scan --path /path/to/project`.
 
-The TypeScript code separates schema validation and database transport, declaration discovery, SemVer assessment, report generation, remediation planning and guarded file writes. Commander handles the CLI boundary. Zod validates advisory data and package declaration shapes. SemVer handles versions and range intersection. There are no subprocess calls in the shipped CLI.
+`check` runs TypeScript, lint and offline tests, with at most two test files running at once. `smoke:pack` installs and exercises a tarball in a temporary project. Tests leave your installed runtime untouched. `verify:sources` contacts official Node.js sources; changed fingerprints require review.
 
-JSON reports contain the local runtime, each declaration's assessment, source revision, timestamps, scope, warnings, diagnostics and exit code. Text output strips terminal controls from untrusted paths and values. SARIF maps findings to CVE rules and relative source locations. Advisory and report formats are versioned at schema version 1.
+Commander handles commands, Zod validates input and SemVer compares versions. Advisory transport, discovery, assessment, reports and file writes are separate modules. The CLI makes no subprocess calls, executes no project scripts and collects no telemetry. Manager discovery checks PATH and NVM_DIR locally. Reports use schema version 1; text output strips terminal controls.
 
-## Release checklist
+<details>
+<summary>Release checklist</summary>
 
-Version 0.1.0 has maintainer approval to release using local validation while hosted CI is unavailable. The cross-platform matrix has not executed for this release. This exception does not represent a passing CI result.
+1. Review the advisory, release notes, lifecycle dates and fingerprints. Increment the data revision for advisory changes.
+2. Run the checks above. Inspect `npm pack --dry-run` and test the installed artifact.
+3. Run cross-platform CI. Releases 0.1.0 and 0.1.1 have maintainer approval for local validation while hosted CI is unavailable; the matrix remains unverified.
+4. Check package contents, version, license, reporting and maintainer access. Exclude credentials, caches and internal guidance.
+5. Obtain release authorization and publish using an approved method. Provenance needs separate setup; publishing is not automatic.
+6. Verify registry integrity and a fresh-cache `npx nodfix` installation.
 
-- Review the advisory, linked releases, source fingerprints, lifecycle dates and conservative range policy against official sources. Increment the advisory revision for data changes.
-- Run `npm ci --ignore-scripts`, `npm run check`, `npm run verify:sources` and the full cross-platform CI matrix. Resolve every required failure.
-- Create and install an npm tarball in a clean temporary project. Smoke-test both command output and scan/fix/verify behavior.
-- Inspect `npm pack --dry-run` and staged paths. Exclude local guidance, internal notes, caches, credentials and development artifacts.
-- Confirm npm name ownership and maintainer access, review the version, license, repository links and security reporting configuration.
-- Configure trusted publishing/provenance or an approved maintainer publishing method. Publish only after explicit release authorization. No automatic publishing workflow is enabled.
-- Verify the registry artifact, integrity and a clean `npx nodfix` installation. Publishing the package is a separate action from pushing this repository.
+</details>
 
-See [SECURITY.md](SECURITY.md) for reporting vulnerabilities and detailed trust boundaries. MIT licensed.
+## Security and license
+
+Nodfix has not received an independent audit. A passing scan does not certify dependency, container or production security. npm audits identify known dependency advisories; they cannot rule out unknown vulnerabilities.
+
+Use [private security reporting](https://github.com/appdever01/nodfix/security/advisories/new) for this package and the [Node.js security policy](https://nodejs.org/en/security/) for Node.js itself. [SECURITY.md](SECURITY.md) describes the trust boundaries and disclosure process.
+
+This project is independent of the Node.js project. Released under the [MIT license](LICENSE).

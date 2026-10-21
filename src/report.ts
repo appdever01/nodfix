@@ -43,7 +43,7 @@ export function toSarif(report: Report): unknown {
       rules: [...issues.map((i) => ({ id: i.id, shortDescription: { text: i.summary }, helpUri: report.advisory.source,
         properties: { 'security-severity': ({ low: '3.0', medium: '6.0', high: '8.0', critical: '9.0' } as const)[i.severity] } })),
         { id: 'NODFIX-REVIEW', shortDescription: { text: 'Runtime requires manual review' } }] } },
-      invocations: [{ executionSuccessful: report.exitCode !== 2, toolExecutionNotifications: [...report.warnings, ...report.diagnostics].map((message) => ({ level: 'warning', message: { text: message } })) }],
+      invocations: [{ executionSuccessful: !report.incomplete && report.exitCode !== 2, toolExecutionNotifications: [...report.warnings, ...report.diagnostics].map((message) => ({ level: 'warning', message: { text: message } })) }],
       properties: { scope: report.scope, advisory: report.advisory, exitCode: report.exitCode }, results }],
   };
 }
